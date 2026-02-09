@@ -1,9 +1,9 @@
 REPORT_FORMAT = """
 ====== TRAFFIC ANALYSIS REPORT ======
 Filter settings:
- - Time range: {filter.start} - {filter.start} (or "all time")
- - Method filter: {filter.method} (or "all methods")
- - Status filter: {filter.status} (or "all statuses")
+ - Time range: {filter_time_range}
+ - Method filter: {filter_method}
+ - Status filter: {filter_status}
 
 Basic statistics:
  - Total requests: {total_requests}

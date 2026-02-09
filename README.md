@@ -1,39 +1,87 @@
-# ADVANCED TRAFFIC ANALYZER
-Скріпт який виконує аналіз логів веб сервера з підтримкою фільтраці та агрегації.
+# Advanced Traffic Analyzer
 
-## Format input file
-<**timestamp**: *int*> <**ip_address**: *str*> <**http_method**: *str*> <**url**: *str*> <**status_code**: *int*> <**response_size**: *int*>
+A small command-line tool to analyze web server access logs. It supports
+filtering, aggregation and basic reporting to help inspect traffic patterns,
+top clients, and response metrics.
 
-## Use example
-$`python bin/advanced_traffic_analyzer.py parse`
+## Input format
 
-Params:
+Each log line must contain six whitespace-separated fields in the following
+order:
+
+- timestamp: integer UNIX timestamp
+- ip_address: client IP address (string)
+- http_method: HTTP method (e.g. GET, POST)
+- url: requested URL
+- status_code: integer HTTP status code
+- response_size: integer number of bytes in the response
+
+Example line:
+
+1615564800 192.0.2.1 GET /index.html 200 5120
+
+## Installation
+
+This project is pure Python. Create a virtual environment and install test
+dependencies before running tests (optional):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt  # if present
 ```
--f --filepath   - Path to . required.
---method        - Http method: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS.
---status        - HTTP status code.
---start         - Start timestamp
---end           - End timestamp
---top           - Top
+
+## Usage
+
+Run the CLI script under `bin/` with the `parse` subcommand to analyze a
+log file. Basic usage:
+
+```bash
+python bin/advanced_traffic_analyzer.py parse --filepath PATH [options]
 ```
+
+Options:
+
+- `--filepath`, `-f` : Path to the log file (required)
+- `--method`         : Filter by HTTP method (GET, POST, PUT, DELETE, ...)
+- `--status`         : Filter by HTTP status or status range (e.g. 200 or 200-299)
+- `--start`          : Start timestamp (inclusive)
+- `--end`            : End timestamp (inclusive)
+- `--top`            : Number of top results to show (default depends on CLI)
 
 Example:
 
-$`python bin/advanced_traffic_analyzer.py parse --filepath test/test_access.log`
+```bash
+python bin/advanced_traffic_analyzer.py parse --filepath tests/test_logs.log --top 5
+```
 
+## Project structure
 
-## Принцип роботи
-Програма поділяється на 3 частини:
-1. Entity - Сюди розмістив, ReportData та FilterOpt.
-2. Kernal - той вже AdvancedTrafficAnalyzer та утіліти.
-3. View - Перегляд даних. ViewReport.
+- `bin/` - CLI entrypoint(s).
+- `internal/` - core implementation: analyzers, entity models, utilities and
+	view/formatting code.
+- `tests/` - unit tests and test fixtures.
 
-Кожна з частин є залежною від попередньої частини, View залежить від Kernal, Kernal від Entity. А Entity це вже головні моделі які не від кого не залежать.
+The code separates concerns into `entity` (data models), the analysis core
+(`anazyler`), and `view` (presentation). This keeps parsing, aggregation, and
+output formatting independent and easier to test.
 
-Як працює:
-перша за все, створюються основні моделі та фільтри, такі як FilterOpt. Потім на основі фільтру створюється модель аналізу, яка і буде аналізувати логи і видавати звіт. далі створюється View модель за допомогою якої виводиться відповідь в термінал.
+## Development and testing
 
-## Можливі покращення
-Можна буде краще прописати View модель.
-Можна буде логічніше розмістити entity
-Симпатичніше написати report format (у view)# advanced_traffic_analyzer
+Run the test suite with `pytest` from the repository root:
+
+```bash
+pytest -q
+```
+
+If you modify code, consider running the tests and linters (if configured).
+
+## Limitations and potential improvements
+
+- Improve the `view` module to support multiple output formats (JSON, CSV).
+- Add configuration for additional aggregations and time-binning.
+- Harden log parsing for more formats and graceful handling of corrupted
+	lines.
+- Add a small CI configuration to run tests automatically.
+
+Contributions, bug reports and documentation improvements are welcome.

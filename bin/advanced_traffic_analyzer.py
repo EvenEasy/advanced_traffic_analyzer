@@ -14,6 +14,15 @@ from bin.namespace import InputNamespace
 
 
 def build_report(inp: InputNamespace):
+    # Validate inputs
+    if inp.top and inp.top <= 0:
+        print("Error: --top must be a positive integer")
+        return
+    
+    if inp.start and inp.end and inp.start > inp.end:
+        print("Error: --start timestamp must be less than or equal to --end")
+        return
+    
     # Build filter
     start_status, end_status = get_status_code_range(inp.status)
     fltr = FilterOpt(inp.top, inp.start, inp.end, inp.method, start_status, end_status)
@@ -23,8 +32,17 @@ def build_report(inp: InputNamespace):
     view = ViewReport()
 
     # Get report and out data
-    report = analyzer.get_report(inp.filepath)
-    view.show_report(report, analyzer.filter)
+    try:
+        report = analyzer.get_report(inp.filepath)
+        if report.total_requests == 0:
+            print("Warning: No matching requests found with the given filters")
+    except Exception as e:
+        print(f"Error: {e}")
+        return
+    try:
+        view.show_report(report, analyzer.filter)
+    except Exception as e:
+        print(f"Error showing report: {e}")
 
 
 def main():
@@ -39,7 +57,8 @@ def main():
     p1.add_argument("--status", type=str)
     p1.add_argument("--start", type=int)
     p1.add_argument("--end", type=int)
-    p1.add_argument("--top", default=3)
+    p1.add_argument("--top", type=int, default=3)
+
     # start building
     args = parser.parse_args(namespace=InputNamespace())
     build_report(args)

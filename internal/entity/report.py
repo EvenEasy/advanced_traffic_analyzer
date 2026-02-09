@@ -4,6 +4,12 @@ from dataclasses import dataclass, field
 
 @dataclass
 class RequestDistribution:
+    """Counts requests per HTTP method.
+
+    Attributes are counters for each supported HTTP verb. This dataclass is
+    intentionally simple and optimized for incremental updates.
+    """
+
     get:        int = 0
     post:       int = 0
     put:        int = 0
@@ -13,11 +19,26 @@ class RequestDistribution:
     options:    int = 0
 
     def report(self, method: str):
+        """Increment the counter for the given HTTP method.
+
+        Args:
+            method: HTTP method string (e.g. 'GET').
+
+        Notes:
+            Method names are looked up case-insensitively. Unknown methods
+            will raise AttributeError implicitly (should not happen when
+            validated earlier).
+        """
         count = self.__getattribute__(method.lower())
         if count is not None:
-            self.__setattr__(method.lower(), count+1)
-    
+            self.__setattr__(method.lower(), count + 1)
+
     def get_json(self):
+        """Return a mapping of HTTP methods to counts.
+
+        Returns:
+            dict: Keys are uppercase HTTP methods, values are counts.
+        """
         return {
             "GET": self.get,
             "POST": self.post,
@@ -50,19 +71,26 @@ class PerformanceMetrics:
     average_resp_size:  int = 0
 
     def report(self, status_code: int) -> bool:
-        """
-        Save data in report
+        """Record the given status code into performance counters.
 
-        :param int status_code: 
-        :return bool: return if the status_code is success
+        Args:
+            status_code: Numeric HTTP status code.
+
+        Returns:
+            bool: True if the status code is considered a successful response
+                (2xx), False otherwise.
+
+        Edge cases:
+            Codes outside expected ranges are ignored for client/server error
+            buckets but will return False.
         """
-        if status_code>=200 and status_code < 300:
-            self.success_req+=1
+        if status_code >= 200 and status_code < 300:
+            self.success_req += 1
             return True
-        elif status_code>=400 and status_code < 500:
-            self.client_errors+=1
-        elif status_code>=500 and status_code < 520:
-            self.server_errors+=1
+        elif status_code >= 400 and status_code < 500:
+            self.client_errors += 1
+        elif status_code >= 500 and status_code < 520:
+            self.server_errors += 1
         return False
 
     def __str__(self):
@@ -77,8 +105,16 @@ class PerformanceMetrics:
 
 @dataclass
 class RecentActivity:
+    """Recent activity metrics for the last 24 hours.
+
+    Attributes:
+        unique_ips: Count of distinct IPs seen in the recent window.
+        requests_per_hour: Mapping from integer hours-ago (0 means within last
+            hour) to number of requests in that bucket.
+    """
+
     unique_ips: int = 0
-    requests_per_hour: Dict[str, int] = field(default_factory=DefaultDict)
+    requests_per_hour: Dict[int, int] = field(default_factory=dict)
 
     def __str__(self):
         return ("<RecentActivity "
@@ -121,6 +157,11 @@ class ReportData:
     __repr__ = __str__
 
 def new_report_data():
+    """Create a fresh ReportData instance with initialized substructures.
+
+    Returns:
+        ReportData: New instance ready to be populated by the analyzer.
+    """
     return ReportData(
         request_dist=RequestDistribution(),
         performance_metrics=PerformanceMetrics(),

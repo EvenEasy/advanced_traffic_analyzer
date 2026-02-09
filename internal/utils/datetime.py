@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 
-now_timestamp = lambda: int(round(datetime.utcnow().timestamp()))   # Datetime now in UTC in timestamp
+now_timestamp = lambda: int(round(datetime.now(UTC).timestamp()))   # Datetime now in UTC in timestamp
